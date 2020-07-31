@@ -52,9 +52,32 @@ In [Ref-Reasoning](https://drive.google.com/drive/folders/1w4qhQgrgUeGOr_wG5KP0y
   including image id, referent id, referent's bounding box in pixel, expression and the number of objects described by the expression.
   
 ## Training and Evaluation
-
-Coming soon.
-
+1. Download the [Ref-Reasoning dataset](https://drive.google.com/drive/folders/1w4qhQgrgUeGOr_wG5KP0yUouMzRNBAxo?usp=sharing) which includes the referring expressions and referents, and put them to `/data/refvg/`.
+2. Download the [gt_objects](https://drive.google.com/drive/folders/10woLRXMEHuiqyMrikRGMiBGNqRqo81HH?usp=sharing), and symbol link it to `/data/gt_objects/`.
+3. Download the [parsed language scene graphs](https://drive.google.com/drive/folders/1UI4WyJu95LDVX6dg1XrLen4onhE_oHv0?usp=sharing) of referring expressions in Ref-Reasoning dataset, and put them to `/data/refvg/`. The language scene graphs are first parsed using [Stanford Scene Graph Parser](https://nlp.stanford.edu/software/scenegraph-parser.shtml), 
+   and then are further processed to obtain inference order. Please see the details in section 3.2.1 of the paper.
+   
+   * The `*_sgs.json` is a dictionary from each expression id to the basic info about its language scene graph.
+     Each basic info includes:
+     * word_info is a list of info (split id, dependent type, weight, word) about words in the language scene graph.
+     * co_index is a dictionary from one split id to its coreference's split id.
+   * The `*_sg_seqs.json` is a dictionary from each expression id to the structured info about its language scene graph.
+     Each structured info includes:
+     * seq_sg is a list of nodes and edges. Each node and edge includes its phrase listed by split ids, 
+       its relations to other nodes and edges, and its type info.
+     * com_seq is a list of indexes of elements with zero out-degree in seq_sg.
+     * num_seq is the number of nodes and edges.
+     * split_to_seq is a dictionary from one split id to the index of seq_sg.
+     
+4. Download the [GloVe](https://drive.google.com/drive/folders/1_rd58NV4LAGH3nZ4ABcgJzAAMkLaNsi3?usp=sharing), and symbol link it to `/data/word_embedding/`.
+5. Train the model:
+   ```
+   bash experiments/script/train.sh $GPUs
+   ```
+6. Evaluate the model:
+   ```
+   bash experiments/script/evaluate.sh $GPUs $Checkpoint
+   ```
 
 ## Citation
 If you find the work useful in your research, please consider citing:
