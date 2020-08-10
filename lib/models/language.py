@@ -71,3 +71,34 @@ class RNNEncoder(nn.Module):
             hidden = hidden.view(hidden.size(0), -1)
 
         return output, hidden, embedded, max_length
+
+
+class ModuleInputAttention(nn.Module):
+    def __init__(self, input_dim):
+        super(ModuleInputAttention, self).__init__()
+        self.fc = nn.Linear(input_dim, 1)
+
+    def forward(self, context, embedded, input_labels):
+        # context(bs, num_seq, max_length, dim_cxt); input_labels(bs, num_seq, max_length)
+        bs, num_seq, max_length = context.size(0), context.size(1), context.size(2)
+        context = context.view(bs*num_seq, max_length, -1)
+        embedded = embedded.view(bs*num_seq, max_length, -1)
+        input_labels = input_labels.view(bs*num_seq, max_length)
+
+        cxt_scores = self.fc(context).squeeze(2)
+        attn = F.softmax(cxt_scores, dim=1)
+
+        # mask zeros
+        is_not_zero = (input_labels != 0).float()
+        attn = attn * is_not_zero
+        attn_sum = attn.sum(1).unsqueeze(1).expand(attn.size(0), attn.size(1))
+        attn[attn_sum!=0] = attn[attn_sum!=0] / attn_sum[attn_sum!=0]
+
+        # compute weighted embedding
+        attn3 = attn.unsqueeze(1)
+        weighted_emb = torch.bmm(attn3, embedded)
+        weighted_emb = weighted_emb.squeeze(1)
+
+        weighted_emb = weighted_emb.view(bs, num_seq, -1)
+
+        return weighted_emb, attn
